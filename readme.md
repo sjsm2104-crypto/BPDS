@@ -1,10 +1,36 @@
-# Descripción del autor del proyecto
-**Estudiante:** Sebastian José Santiz Mestre
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-**Asignatura:** BPDS (Buenas Practicas de Desarrollo de Software)
+## Getting Started
 
-**Universidad:** Universidad de la Costa
+First, run the development server:
 
-**Semestre:** Cuarto
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-**Descripción del proyecto:** Este proyecto trata sobre el uso de flujos de trabajo con ramas, cambios y pull requests en Git. Se complementa con lo realizado en las dos primeras clases y con la tarea de la primera semana, con el fin de adquirir las bases necesarias para el uso de Git antes de comenzar a trabajar en grupos de cuatro personas en las demás entregas.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
