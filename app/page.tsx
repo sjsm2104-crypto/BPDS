@@ -1,21 +1,24 @@
 "use client";
-
+ 
 import { useState, useEffect } from "react";
-
+ 
 type Todo = {
   id: number;
   text: string;
   completed: boolean;
 };
-
+ 
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [deletedTodos, setDeletedTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
-
-  // READ (Cargar de localStorage)
+ 
+  // READ (Cargar tareas y papelera desde localStorage)
   useEffect(() => {
     const saved = localStorage.getItem("bpds_todos");
+    const savedDeleted = localStorage.getItem("bpds_deleted_todos");
+ 
     if (saved) {
       try {
         setTodos(JSON.parse(saved));
@@ -23,17 +26,36 @@ export default function Home() {
         console.error("Error cargando localStorage", e);
       }
     }
+ 
+    if (savedDeleted) {
+      try {
+        setDeletedTodos(JSON.parse(savedDeleted));
+      } catch (e) {
+        console.error("Error cargando papelera", e);
+      }
+    }
+ 
     setIsLoaded(true);
   }, []);
-
-  // Persistir cambios
+ 
+  // Guardar tareas principales
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem("bpds_todos", JSON.stringify(todos));
     }
   }, [todos, isLoaded]);
-
-  // CREATE (Únicamente con tecla Enter)
+ 
+  // Guardar papelera
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem(
+        "bpds_deleted_todos",
+        JSON.stringify(deletedTodos)
+      );
+    }
+  }, [deletedTodos, isLoaded]);
+ 
+  // CREATE
   const addTodo = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && newTodo.trim() !== "") {
       const todo: Todo = {
@@ -41,60 +63,125 @@ export default function Home() {
         text: newTodo.trim(),
         completed: false,
       };
-
+ 
       setTodos([todo, ...todos]);
       setNewTodo("");
     }
   };
-
+ 
   // UPDATE (Tachar / Destachar)
   const toggleTodo = (id: number) => {
     setTodos(
       todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        todo.id === id
+          ? { ...todo, completed: !todo.completed }
+          : todo
       )
     );
   };
-
-  // UPDATE (Editar texto directamente)
+ 
+  // UPDATE (Editar tarea principal)
   const updateTodo = (id: number, newText: string) => {
     setTodos(
       todos.map((todo) =>
-        todo.id === id ? { ...todo, text: newText } : todo
+        todo.id === id
+          ? { ...todo, text: newText }
+          : todo
       )
     );
   };
-
-  // DELETE
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+ 
+  // UPDATE (Editar tarea en la papelera)
+  const updateDeletedTodo = (id: number, newText: string) => {
+    setDeletedTodos(
+      deletedTodos.map((todo) =>
+        todo.id === id
+          ? { ...todo, text: newText }
+          : todo
+      )
+    );
   };
-
-  const completedCount = todos.filter((t) => t.completed).length;
-
+ 
+  // DELETE (Mover tarea a la papelera)
+  const deleteTodo = (id: number) => {
+    const todoToDelete = todos.find(
+      (todo) => todo.id === id
+    );
+ 
+    if (todoToDelete) {
+      setDeletedTodos([
+        todoToDelete,
+        ...deletedTodos,
+      ]);
+ 
+      setTodos(
+        todos.filter((todo) => todo.id !== id)
+      );
+    }
+  };
+ 
+  // Restaurar tarea desde la papelera
+  const restoreTodo = (id: number) => {
+    const todoToRestore = deletedTodos.find(
+      (todo) => todo.id === id
+    );
+ 
+    if (todoToRestore) {
+      setTodos([
+        todoToRestore,
+        ...todos,
+      ]);
+ 
+      setDeletedTodos(
+        deletedTodos.filter(
+          (todo) => todo.id !== id
+        )
+      );
+    }
+  };
+ 
+  // DELETE definitivo desde la papelera
+  const permanentDelete = (id: number) => {
+    setDeletedTodos(
+      deletedTodos.filter(
+        (todo) => todo.id !== id
+      )
+    );
+  };
+ 
+  // Cantidad de tareas completadas
+  const completedCount = todos.filter(
+    (todo) => todo.completed
+  ).length;
+ 
   return (
     <div className="min-h-screen bg-zinc-900 text-zinc-100 flex flex-col items-center justify-start p-6 sm:p-12 font-sans">
       <main className="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
-        
+ 
         {/* Encabezado y Estadísticas */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-5">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
               TODO LIST
             </h1>
-            <p className="text-xs text-zinc-400">BPDS Project · Next.js CRUD</p>
+ 
+            <p className="text-xs text-zinc-400">
+              BPDS Project · Next.js CRUD
+            </p>
           </div>
+ 
           <div className="flex gap-2">
             <span className="text-xs bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full font-medium">
               Total: {todos.length}
             </span>
+ 
             <span className="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full font-medium">
               Hechas: {completedCount}
             </span>
           </div>
         </header>
-
-        {/* CREATE Input (Sin botón) */}
+ 
+        {/* CREATE Input */}
         <input
           type="text"
           placeholder="Escribe una tarea y presiona Enter"
@@ -103,8 +190,8 @@ export default function Home() {
           onKeyDown={addTodo}
           className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
         />
-
-        {/* READ & UPDATE & DELETE List */}
+ 
+        {/* LISTA PRINCIPAL */}
         <ul className="space-y-2">
           {todos.length === 0 ? (
             <li className="text-center py-10 text-zinc-500 text-sm border border-dashed border-zinc-800 rounded-xl">
@@ -120,7 +207,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => toggleTodo(todo.id)}
-                  className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
+                  className={`w-6 h-6 shrink-0 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
                     todo.completed
                       ? "bg-emerald-500 text-zinc-950"
                       : "border border-zinc-700 text-transparent hover:border-zinc-500"
@@ -128,24 +215,31 @@ export default function Home() {
                 >
                   ✓
                 </button>
-
+ 
                 {/* Input Edición Inline */}
                 <input
                   type="text"
                   value={todo.text}
-                  onChange={(e) => updateTodo(todo.id, e.target.value)}
-                  className={`flex-1 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 rounded px-1 transition-all ${
+                  onChange={(e) =>
+                    updateTodo(
+                      todo.id,
+                      e.target.value
+                    )
+                  }
+                  className={`flex-1 min-w-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 rounded px-1 transition-all ${
                     todo.completed
                       ? "line-through text-zinc-500"
                       : "text-zinc-200"
                   }`}
                 />
-
+ 
                 {/* Botón Eliminar */}
                 <button
                   type="button"
-                  onClick={() => deleteTodo(todo.id)}
-                  className="text-xs text-zinc-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                  onClick={() =>
+                    deleteTodo(todo.id)
+                  }
+                  className="shrink-0 text-xs text-zinc-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
                 >
                   Eliminar
                 </button>
@@ -153,7 +247,70 @@ export default function Home() {
             ))
           )}
         </ul>
-
+ 
+        {/* PAPELERA */}
+        <section className="border-t border-zinc-800 pt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-zinc-300">
+              Papelera
+            </h2>
+ 
+            <span className="text-xs bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full font-medium">
+              Eliminadas: {deletedTodos.length}
+            </span>
+          </div>
+ 
+          <ul className="space-y-2">
+            {deletedTodos.length === 0 ? (
+              <li className="text-center py-6 text-zinc-500 text-sm border border-dashed border-zinc-800 rounded-xl">
+                La papelera está vacía.
+              </li>
+            ) : (
+              deletedTodos.map((todo) => (
+                <li
+                  key={todo.id}
+                  className="group flex items-center justify-between gap-3 bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 p-3 rounded-xl transition-all"
+                >
+                  {/* Input editable de la tarea eliminada */}
+                  <input
+                    type="text"
+                    value={todo.text}
+                    onChange={(e) =>
+                      updateDeletedTodo(
+                        todo.id,
+                        e.target.value
+                      )
+                    }
+                    className="flex-1 min-w-0 bg-transparent text-sm text-zinc-500 line-through focus:outline-none focus:ring-1 focus:ring-indigo-500/50 rounded px-1 transition-all"
+                  />
+ 
+                  {/* Botón Restaurar */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      restoreTodo(todo.id)
+                    }
+                    className="shrink-0 text-xs text-zinc-500 hover:text-emerald-400 p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                  >
+                    Restaurar
+                  </button>
+ 
+                  {/* Botón Eliminar definitivo */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      permanentDelete(todo.id)
+                    }
+                    className="shrink-0 text-xs text-zinc-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                  >
+                    Eliminar
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
+ 
       </main>
     </div>
   );
