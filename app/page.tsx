@@ -155,7 +155,7 @@ export default function Home() {
         <ul className="space-y-2">
           {todos.length === 0 ? (
             <li className="text-center py-10 text-[var(--color-muted)] text-sm border border-dashed border-[var(--color-border)] rounded-xl">
-              No hay tareas registradas. Escribe una arriba y presiona Enter.
+              No hay tareas guardadas. Escribe una arriba y presiona Enter.
             </li>
           ) : (
             todos.map((todo) => (
